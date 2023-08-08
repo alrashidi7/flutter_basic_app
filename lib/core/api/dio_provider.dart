@@ -15,14 +15,12 @@ class DioConsumer implements ApiConsumer {
   DioConsumer({
     required this.client,
   }) {
-    // ignore: deprecated_member_use
-
     if (!kIsWeb) {
-      (client.httpClientAdapter as DefaultHttpClientAdapter)
-          .onHttpClientCreate = (HttpClient client) {
-        client.badCertificateCallback =
+      (client.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+        HttpClient? httpClient;
+        httpClient?.badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
-        return client;
+        return httpClient!;
       };
     }
     client.options
@@ -47,7 +45,7 @@ class DioConsumer implements ApiConsumer {
     try {
       final response = await client.get(path, queryParameters: queryParameters);
       return _handleResposneAsJson(response);
-    } on DioError catch (error) {
+    } on DioException catch (error) {
       return _handleDioError(error);
     }
   }
@@ -66,7 +64,7 @@ class DioConsumer implements ApiConsumer {
       final response =
           await client.post(path, queryParameters: queryParameters, data: body);
       return _handleResposneAsJson(response);
-    } on DioError catch (error) {
+    } on DioException catch (error) {
       return _handleDioError(error);
     }
   }
@@ -85,7 +83,7 @@ class DioConsumer implements ApiConsumer {
       final response =
           await client.post(path, queryParameters: queryParameters, data: body);
       return _handleResposneAsJson(response);
-    } on DioError catch (error) {
+    } on DioException catch (error) {
       return _handleDioError(error);
     }
   }
@@ -97,16 +95,15 @@ class DioConsumer implements ApiConsumer {
     return convert.json.decode(response.data);
   }
 
-  dynamic _handleDioError(DioError error) {
-    print('hre:::::; dio consumer $error');
+  dynamic _handleDioError(DioException error) {
     switch (error.type) {
-      case DioErrorType.connectionTimeout:
-      case DioErrorType.sendTimeout:
-      case DioErrorType.receiveTimeout:
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
         throw const FetchDataException();
-      case DioErrorType.badCertificate:
+      case DioExceptionType.badCertificate:
         throw const UnauthorizedException('');
-      case DioErrorType.badResponse:
+      case DioExceptionType.badResponse:
         switch (error.response?.statusCode) {
           case StatusCode.internalServerError:
             throw const InternalServerErrorException();
@@ -118,10 +115,10 @@ class DioConsumer implements ApiConsumer {
         }
         throw BadRequestException(
             error.response?.data['message'] ?? error.response?.data['error']);
-      case DioErrorType.connectionError:
-      case DioErrorType.unknown:
+      case DioExceptionType.connectionError:
+      case DioExceptionType.unknown:
         throw const NoInternetConnectionException();
-      case DioErrorType.cancel:
+      case DioExceptionType.cancel:
         throw const InternalServerErrorException();
 
       default:
