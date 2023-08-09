@@ -26,6 +26,7 @@ class NetworkCubit extends Cubit<NetworkState> {
       switch (status) {
         case InternetConnectionStatus.connected:
           emit(InternetConnectionConnected(showConnected: showConnected));
+
           showConnected = false;
           break;
         case InternetConnectionStatus.disconnected:
@@ -40,5 +41,10 @@ class NetworkCubit extends Cubit<NetworkState> {
   Future<void> close() async {
     internetConnectionStreamSubscription!.cancel();
     return super.close();
+  }
+
+  testNetworkOffline() {
+    emit(NetworkInitial());
+    emit(InternetConnectionDisconnected());
   }
 }
