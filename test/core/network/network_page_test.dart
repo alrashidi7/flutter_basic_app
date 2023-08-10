@@ -9,30 +9,27 @@ import 'package:flutter_basic_app/injection_container.dart' as di;
 void main() {
  Future<void> arrangeNetworkCheckIsOnline() async {
     Future.delayed(const Duration(seconds: 1));
-    
-      di.sl<NetworkCubit>().();
+    di.sl<NetworkCubit>().monitorInternetConnection();
   }
-    Future<void> arrangeNetworkCheckIsOnline() async {
+    Future<void> arrangeNetworkCheckIsOffline() async {
     Future.delayed(const Duration(seconds: 1));
       di.sl<NetworkCubit>().testNetworkOffline();
   }
 
   setUpAll(() async {
     await di.init();
-    di.sl<NetworkCubit>().testNetworkOffline();
   });
 
 
   Widget createWidgetUnderTest(bool connected) {
+   if(connected){
+    arrangeNetworkCheckIsOnline();
+   }else{
+    arrangeNetworkCheckIsOffline()
+   }
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) {
-          if (connected) {
-            return di.sl<NetworkCubit>()..monitorInternetConnection();
-          } else {
-            return di.sl<NetworkCubit>()..testNetworkOffline();
-          }
-        })
+        BlocProvider(create: (_) => di.sl<NetworkCubit>())
       ],
       child: const MaterialApp(
         home: NetworkCheckWidget(
