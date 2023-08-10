@@ -7,9 +7,14 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:flutter_basic_app/injection_container.dart' as di;
 
 void main() {
-  Future<NetworkState> arrangeNetworkCheckIsOnline() async {
+ Future<void> arrangeNetworkCheckIsOnline() async {
     Future.delayed(const Duration(seconds: 1));
-    return InternetConnectionConnected(showConnected: false);
+    
+      di.sl<NetworkCubit>().();
+  }
+    Future<void> arrangeNetworkCheckIsOnline() async {
+    Future.delayed(const Duration(seconds: 1));
+      di.sl<NetworkCubit>().testNetworkOffline();
   }
 
   setUpAll(() async {
@@ -43,13 +48,13 @@ void main() {
     );
   }
 
-  // testWidgets('check network online is diplayed', (widgetTester) async {
-  //   await arrangeNetworkCheckIsOnline();
-  //   await widgetTester.pumpWidget(createWidgetUnderTest(true));
-  //   await widgetTester.pump(const Duration(milliseconds: 100));
-  //   expect(find.byKey(const Key('device_online')), findsOneWidget);
-  //   await widgetTester.pumpAndSettle(const Duration(seconds: 2));
-  // });
+  testWidgets('check network online is diplayed', (widgetTester) async {
+    await arrangeNetworkCheckIsOnline();
+    await widgetTester.pumpWidget(createWidgetUnderTest(true));
+    await widgetTester.pump(const Duration(milliseconds: 100));
+    expect(find.byKey(const Key('device_online')), findsOneWidget);
+    await widgetTester.pumpAndSettle(const Duration(seconds: 2));
+  });
 
   testWidgets('check network offline is displayed', (widgetTester) async {
     await widgetTester.pumpWidget(createWidgetUnderTest(false));
