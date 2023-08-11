@@ -12,7 +12,7 @@ class NetworkCubit extends Cubit<NetworkState> {
   final InternetConnectionChecker connectionChecker;
   NetworkCubit({required this.connectionChecker}) : super(NetworkInitial()) {
     if ((Platform.isAndroid || Platform.isIOS) && !kIsWeb) {
-      monitorInternetConnection();
+      //monitorInternetConnection();
     }
   }
 
@@ -20,31 +20,34 @@ class NetworkCubit extends Cubit<NetworkState> {
   StreamSubscription? internetConnectionStreamSubscription;
   bool showConnected = false;
 
-  void monitorInternetConnection() async {
-    internetConnectionStreamSubscription =
-        connectionChecker.onStatusChange.listen((status) {
-      switch (status) {
-        case InternetConnectionStatus.connected:
-          emit(InternetConnectionConnected(showConnected: showConnected));
+  // void monitorInternetConnection() async {
+  //   internetConnectionStreamSubscription =
+  //       connectionChecker.onStatusChange.listen((status) {
+  //     switch (status) {
+  //       case InternetConnectionStatus.connected:
+  //         emit(InternetConnectionConnected(showConnected: showConnected));
 
-          showConnected = false;
-          break;
-        case InternetConnectionStatus.disconnected:
-          showConnected = true;
-          emit(InternetConnectionDisconnected());
-          break;
-      }
-    });
-  }
+  //         showConnected = false;
+  //         break;
+  //       case InternetConnectionStatus.disconnected:
+  //         showConnected = true;
+  //         emit(InternetConnectionDisconnected());
+  //         break;
+  //     }
+  //   });
+  // }
 
   @override
   Future<void> close() async {
-    internetConnectionStreamSubscription!.cancel();
+    internetConnectionStreamSubscription?.cancel();
     return super.close();
   }
 
   testNetworkOffline() {
-    emit(NetworkInitial());
     emit(InternetConnectionDisconnected());
+  }
+
+  testNetworkOnline() async {
+    emit(InternetConnectionConnected(showConnected: false));
   }
 }

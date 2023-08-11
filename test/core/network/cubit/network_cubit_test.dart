@@ -3,42 +3,45 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:flutter_basic_app/injection_container.dart' as di;
 
 void main() {
-  late InternetConnectionChecker checker;
+  late NetworkCubit networkCubit;
+  late bool diInitialized = false;
 
-  setUp(() {
-    checker = InternetConnectionChecker.createInstance();
+  setUp(() async {
+    if (!diInitialized) {
+      await di.init();
+    }
+    diInitialized = true;
+    networkCubit =
+        NetworkCubit(connectionChecker: di.sl<InternetConnectionChecker>());
   });
 
-  Future<InternetConnectionStatus> arrangeNetworkCheckIsOnline() async {
-    Future.delayed(const Duration(seconds: 1));
-    return InternetConnectionStatus.connected;
-  }
-
-  Future<InternetConnectionStatus> arrangeNetworkCheckIsOffline() async {
-    Future.delayed(const Duration(seconds: 1));
-    return InternetConnectionStatus.disconnected;
-  }
-
-  test('check network shoud be online', () async {
+  test(
+      'network cubit shoud emit network online state when call text online network',
+      () async {
     //arrange
-    const matcher = InternetConnectionStatus.connected;
-    //act
-    final result = await arrangeNetworkCheckIsOnline();
-    // assert
-    expect(result, matcher);
-  });
-
-  test('check network shoud be offline', () async {
-    // arrange
-    const matcher = InternetConnectionStatus.disconnected;
-
-    // act
-    final result = await arrangeNetworkCheckIsOffline();
+    final expectedState = InternetConnectionConnected(showConnected: false);
 
     //assert
+    expectLater(networkCubit.stream, emits(isA<InternetConnectionConnected>()));
 
-    expect(result, matcher);
+    //act
+    await networkCubit.testNetworkOnline();
+  });
+
+  test(
+      'network cubti shoud emit network offline state when call test online network',
+      () async {
+    //arrrange
+    final expectedState = InternetConnectionDisconnected();
+
+    //assert
+    expectLater(
+        networkCubit.stream, emits(isA<InternetConnectionDisconnected>()));
+
+    //act
+    await networkCubit.testNetworkOffline();
   });
 }

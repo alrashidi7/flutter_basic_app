@@ -7,56 +7,55 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:flutter_basic_app/injection_container.dart' as di;
 
 void main() {
- Future<void> arrangeNetworkCheckIsOnline() async {
-    Future.delayed(const Duration(seconds: 1));
-    di.sl<NetworkCubit>().monitorInternetConnection();
-  }
-    Future<void> arrangeNetworkCheckIsOffline() async {
-    Future.delayed(const Duration(seconds: 1));
-      di.sl<NetworkCubit>().testNetworkOffline();
-  }
+  late NetworkCubit networkCubit;
+  late bool diInitialized = false;
 
-  setUpAll(() async {
-    await di.init();
+  setUp(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    if (!diInitialized) {
+      await di.init();
+      diInitialized = true;
+    }
+    networkCubit = di.sl<NetworkCubit>();
   });
 
-
-  Widget createWidgetUnderTest(bool connected) {
-   if(connected){
-    arrangeNetworkCheckIsOnline();
-   }else{
-    arrangeNetworkCheckIsOffline()
-   }
+  arrangeTestWidget() {
     return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => di.sl<NetworkCubit>())
-      ],
-      child: const MaterialApp(
-        home: NetworkCheckWidget(
-          child: Scaffold(
-            body: Center(
+      providers: [BlocProvider(create: (_) => networkCubit)],
+      child: MaterialApp(
+        home: BlocBuilder<NetworkCubit, NetworkState>(
+          builder: (context, state) {
+            return const NetworkCheckWidget(
+                child: Scaffold(
+              body: Center(
                 child: Text(
-              'check network online',
-              key: Key('device_online'),
-            )),
-          ),
+                  'device online',
+                  key: Key('device_online'),
+                ),
+              ),
+            ));
+          },
         ),
       ),
     );
   }
 
-  testWidgets('check network online is diplayed', (widgetTester) async {
-    await arrangeNetworkCheckIsOnline();
-    await widgetTester.pumpWidget(createWidgetUnderTest(true));
-    await widgetTester.pump(const Duration(milliseconds: 100));
+  testWidgets('network cubit shoud diplay child when call test online network',
+      (widgetTester) async {
+    await networkCubit.testNetworkOnline();
+    await widgetTester.pumpWidget(arrangeTestWidget());
+    await widgetTester.pump(const Duration(milliseconds: 500));
     expect(find.byKey(const Key('device_online')), findsOneWidget);
-    await widgetTester.pumpAndSettle(const Duration(seconds: 2));
+    await widgetTester.pumpAndSettle();
   });
 
-  testWidgets('check network offline is displayed', (widgetTester) async {
-    await widgetTester.pumpWidget(createWidgetUnderTest(false));
-    await widgetTester.pump(const Duration(milliseconds: 100));
+  testWidgets(
+      'network cubit shoud diplay offline child when call test offline network',
+      (widgetTester) async {
+    await networkCubit.testNetworkOffline();
+    await widgetTester.pumpWidget(arrangeTestWidget());
+    await widgetTester.pump(const Duration(milliseconds: 500));
     expect(find.byKey(const Key('device_offline')), findsOneWidget);
-    await widgetTester.pumpAndSettle(const Duration(seconds: 4));
+    await widgetTester.pumpAndSettle();
   });
 }
